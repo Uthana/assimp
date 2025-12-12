@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assimp/IOSystem.hpp>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
+#include <assimp/config.h>
 #include <cmath>
 #include <memory>
 
@@ -54,9 +55,9 @@ namespace Assimp {
 
 // ------------------------------------------------------------------------------------------------
 // Worker function for exporting a scene to BVH. Prototyped and registered in Exporter.cpp
-void ExportSceneBVH(const char *pFile, IOSystem *pIOSystem, const aiScene *pScene, const ExportProperties * /*pProperties*/) {
+void ExportSceneBVH(const char *pFile, IOSystem *pIOSystem, const aiScene *pScene, const ExportProperties *pProperties) {
     // invoke the exporter
-    BVHExporter exporter(pFile, pScene);
+    BVHExporter exporter(pFile, pScene, pProperties);
 
     if (exporter.mOutput.fail()) {
         throw DeadlyExportError("output data creation failed. Most likely the file became too large: " + std::string(pFile));
@@ -106,12 +107,17 @@ void QuaternionToEulerZXY(const aiQuaternion &q, float &rotX, float &rotY, float
 } // anonymous namespace
 
 // ------------------------------------------------------------------------------------------------
-BVHExporter::BVHExporter(const char *filename, const aiScene *pScene)
-    : mFilename(filename), mScene(pScene), mAnim(nullptr) {
+BVHExporter::BVHExporter(const char *filename, const aiScene *pScene, const ExportProperties *pProperties)
+    : mFilename(filename), mScene(pScene), mAnim(nullptr), mWriteEndSites(false) {
     // make sure that all formatting happens using the standard, C locale
     const std::locale &l = std::locale("C");
     mOutput.imbue(l);
     mOutput.precision(6);
+
+    // Check export properties - by default, do not write End Sites
+    if (pProperties) {
+        mWriteEndSites = !pProperties->GetPropertyBool(AI_CONFIG_EXPORT_BVH_NO_END_SITES, true);
+    }
 
     // Get the first animation if available
     if (pScene->mNumAnimations > 0) {
@@ -168,8 +174,8 @@ void BVHExporter::WriteNode(const aiNode *node, int depth) {
         WriteNode(node->mChildren[i], depth + 1);
     }
 
-    // For leaf nodes, add an End Site to indicate the bone terminates
-    if (isLeaf) {
+    // For leaf nodes, optionally add an End Site to indicate the bone terminates
+    if (isLeaf && mWriteEndSites) {
         std::string childIndent((depth + 1) * 2, ' ');
         mOutput << childIndent << "End Site\n";
         mOutput << childIndent << "{\n";

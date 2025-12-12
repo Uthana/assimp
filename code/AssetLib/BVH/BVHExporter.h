@@ -56,13 +56,15 @@ struct aiAnimation;
 
 namespace Assimp {
 
+class ExportProperties;
+
 // ------------------------------------------------------------------------------------------------
 /** Helper class to export a given scene to a BVH file. */
 // ------------------------------------------------------------------------------------------------
 class BVHExporter {
 public:
     /// Constructor for a specific scene to export
-    BVHExporter(const char *filename, const aiScene *pScene);
+    BVHExporter(const char *filename, const aiScene *pScene, const ExportProperties *pProperties);
 
     /// public string-stream to write all output into
     std::ostringstream mOutput;
@@ -90,6 +92,9 @@ private:
 
     /// List of nodes in order they appear in hierarchy (for motion data output)
     std::vector<const aiNode *> mNodeOrder;
+
+    /// Whether to write End Site nodes for leaf joints
+    bool mWriteEndSites;
 };
 
 } // namespace Assimp
