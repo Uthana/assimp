@@ -141,6 +141,9 @@ void ExportAssimp2Json(const char* , IOSystem*, const aiScene* , const Assimp::E
 #ifndef ASSIMP_BUILD_NO_PBRT_EXPORTER
 void ExportScenePbrt(const char*, IOSystem*, const aiScene*, const ExportProperties*);
 #endif
+#ifndef ASSIMP_BUILD_NO_BVH_EXPORTER
+void ExportSceneBVH(const char*, IOSystem*, const aiScene*, const ExportProperties*);
+#endif
 
 static void setupExporterArray(std::vector<Exporter::ExportFormatEntry> &exporters) {
 	(void)exporters;
@@ -228,6 +231,10 @@ static void setupExporterArray(std::vector<Exporter::ExportFormatEntry> &exporte
 
 #ifndef ASSIMP_BUILD_NO_ASSJSON_EXPORTER
 	exporters.emplace_back("assjson", "Assimp JSON Document", "json", &ExportAssimp2Json, 0);
+#endif
+
+#ifndef ASSIMP_BUILD_NO_BVH_EXPORTER
+	exporters.emplace_back("bvh", "Biovision BVH (MoCap)", "bvh", &ExportSceneBVH, 0);
 #endif
 }
 

@@ -682,6 +682,10 @@ if (NOT ASSIMP_NO_EXPORT)
     AssetLib/STL/STLExporter.h
     AssetLib/STL/STLExporter.cpp)
 
+  ADD_ASSIMP_EXPORTER( BVH
+    AssetLib/BVH/BVHExporter.h
+    AssetLib/BVH/BVHExporter.cpp)
+
   ADD_ASSIMP_EXPORTER( X
     AssetLib/X/XFileExporter.h
     AssetLib/X/XFileExporter.cpp)
