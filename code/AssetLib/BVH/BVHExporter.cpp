@@ -136,47 +136,48 @@ void BVHExporter::WriteHierarchy() {
 void BVHExporter::WriteNode(const aiNode *node, int depth) {
     std::string indent(depth * 2, ' ');
     bool isRoot = (depth == 0);
-    bool isEndSite = (node->mNumChildren == 0);
+    bool isLeaf = (node->mNumChildren == 0);
 
     // Get the offset from the node's transformation matrix
     aiVector3D offset(node->mTransformation.a4,
                       node->mTransformation.b4,
                       node->mTransformation.c4);
 
-    if (isEndSite) {
-        // End Site nodes have no channels
-        mOutput << indent << "End Site\n";
-        mOutput << indent << "{\n";
-        mOutput << indent << "  OFFSET " << offset.x << " " << offset.y << " " << offset.z << "\n";
-        mOutput << indent << "}\n";
+    // ROOT or JOINT - all named nodes are written as joints
+    if (isRoot) {
+        mOutput << "ROOT " << node->mName.C_Str() << "\n";
     } else {
-        // ROOT or JOINT
-        if (isRoot) {
-            mOutput << "ROOT " << node->mName.C_Str() << "\n";
-        } else {
-            mOutput << indent << "JOINT " << node->mName.C_Str() << "\n";
-        }
-
-        mOutput << indent << "{\n";
-        mOutput << indent << "  OFFSET " << offset.x << " " << offset.y << " " << offset.z << "\n";
-
-        // Root nodes get 6 channels (position + rotation), joints get 3 (rotation only)
-        if (isRoot) {
-            mOutput << indent << "  CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n";
-        } else {
-            mOutput << indent << "  CHANNELS 3 Zrotation Xrotation Yrotation\n";
-        }
-
-        // Track node order for motion data output
-        mNodeOrder.push_back(node);
-
-        // Write children
-        for (unsigned int i = 0; i < node->mNumChildren; ++i) {
-            WriteNode(node->mChildren[i], depth + 1);
-        }
-
-        mOutput << indent << "}\n";
+        mOutput << indent << "JOINT " << node->mName.C_Str() << "\n";
     }
+
+    mOutput << indent << "{\n";
+    mOutput << indent << "  OFFSET " << offset.x << " " << offset.y << " " << offset.z << "\n";
+
+    // Root nodes get 6 channels (position + rotation), joints get 3 (rotation only)
+    if (isRoot) {
+        mOutput << indent << "  CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n";
+    } else {
+        mOutput << indent << "  CHANNELS 3 Zrotation Xrotation Yrotation\n";
+    }
+
+    // Track node order for motion data output
+    mNodeOrder.push_back(node);
+
+    // Write children
+    for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+        WriteNode(node->mChildren[i], depth + 1);
+    }
+
+    // For leaf nodes, add an End Site to indicate the bone terminates
+    if (isLeaf) {
+        std::string childIndent((depth + 1) * 2, ' ');
+        mOutput << childIndent << "End Site\n";
+        mOutput << childIndent << "{\n";
+        mOutput << childIndent << "  OFFSET 0 0 0\n";
+        mOutput << childIndent << "}\n";
+    }
+
+    mOutput << indent << "}\n";
 }
 
 // ------------------------------------------------------------------------------------------------
