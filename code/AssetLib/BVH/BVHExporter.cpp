@@ -77,25 +77,33 @@ void ExportSceneBVH(const char *pFile, IOSystem *pIOSystem, const aiScene *pScen
 namespace {
 
 // Helper function to convert quaternion to Euler angles (ZXY order, which is common in BVH)
+// The BVH loader builds R = Rz * Rx * Ry, so we decompose to match that convention.
 void QuaternionToEulerZXY(const aiQuaternion &q, float &rotX, float &rotY, float &rotZ) {
     // Convert quaternion to rotation matrix
     aiMatrix3x3 mat = q.GetMatrix();
 
-    // Extract Euler angles in ZXY order
-    // This matches the common BVH convention: Zrotation Xrotation Yrotation
-    float sinX = mat.b3;
+    // For R = Rz * Rx * Ry, the matrix is:
+    // | cos(z)*cos(y) + sin(z)*sin(x)*sin(y)   -sin(z)*cos(x)   cos(z)*sin(y) - sin(z)*sin(x)*cos(y) |
+    // | sin(z)*cos(y) - cos(z)*sin(x)*sin(y)    cos(z)*cos(x)   sin(z)*sin(y) + cos(z)*sin(x)*cos(y) |
+    // |        cos(x)*sin(y)                       sin(x)              cos(x)*cos(y)                 |
+    //
+    // So: sin(x) = c2, and we can extract Y and Z from other elements.
+
+    float sinX = mat.c2;
     if (sinX >= 1.0f) {
+        // Gimbal lock: X = 90 degrees
         rotX = static_cast<float>(AI_MATH_PI / 2.0);
         rotY = 0.0f;
-        rotZ = std::atan2(mat.a2, mat.a1);
+        rotZ = std::atan2(mat.b1, mat.a1);
     } else if (sinX <= -1.0f) {
+        // Gimbal lock: X = -90 degrees
         rotX = static_cast<float>(-AI_MATH_PI / 2.0);
         rotY = 0.0f;
-        rotZ = std::atan2(-mat.a2, mat.a1);
+        rotZ = std::atan2(-mat.b1, mat.a1);
     } else {
         rotX = std::asin(sinX);
-        rotY = std::atan2(-mat.b1, mat.b2);
-        rotZ = std::atan2(-mat.a3, mat.c3);
+        rotY = std::atan2(mat.c1, mat.c3);
+        rotZ = std::atan2(-mat.a2, mat.b2);
     }
 
     // Convert from radians to degrees
