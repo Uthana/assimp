@@ -83,26 +83,36 @@ void QuaternionToEulerZXY(const aiQuaternion &q, float &rotX, float &rotY, float
     aiMatrix3x3 mat = q.GetMatrix();
 
     // For R = Rz * Rx * Ry, the matrix is:
-    // | cos(z)*cos(y) + sin(z)*sin(x)*sin(y)   -sin(z)*cos(x)   cos(z)*sin(y) - sin(z)*sin(x)*cos(y) |
-    // | sin(z)*cos(y) - cos(z)*sin(x)*sin(y)    cos(z)*cos(x)   sin(z)*sin(y) + cos(z)*sin(x)*cos(y) |
-    // |        cos(x)*sin(y)                       sin(x)              cos(x)*cos(y)                 |
+    // | cos(z)cos(y) - sin(z)sin(x)sin(y)   -sin(z)cos(x)   cos(z)sin(y) + sin(z)sin(x)cos(y) |
+    // | sin(z)cos(y) + cos(z)sin(x)sin(y)    cos(z)cos(x)   sin(z)sin(y) - cos(z)sin(x)cos(y) |
+    // |        -cos(x)sin(y)                    sin(x)              cos(x)cos(y)              |
     //
     // So: sin(x) = c2, and we can extract Y and Z from other elements.
+    // c1 = -cos(x)sin(y), c3 = cos(x)cos(y), so y = atan2(-c1, c3)
+    // a2 = -sin(z)cos(x), b2 = cos(z)cos(x), so z = atan2(-a2, b2)
 
     float sinX = mat.c2;
     if (sinX >= 1.0f) {
         // Gimbal lock: X = 90 degrees
+        // Matrix becomes: | cos(z+y)  0  sin(z+y) |
+        //                 | sin(z+y)  0 -cos(z+y) |
+        //                 |    0      1     0     |
+        // We set Y = 0 and put all rotation in Z
         rotX = static_cast<float>(AI_MATH_PI / 2.0);
         rotY = 0.0f;
         rotZ = std::atan2(mat.b1, mat.a1);
     } else if (sinX <= -1.0f) {
         // Gimbal lock: X = -90 degrees
+        // Matrix becomes: | cos(z-y)  0  sin(z-y) |
+        //                 | sin(z-y)  0  cos(z-y) |
+        //                 |    0     -1     0     |
+        // We set Y = 0 and put all rotation in Z
         rotX = static_cast<float>(-AI_MATH_PI / 2.0);
         rotY = 0.0f;
-        rotZ = std::atan2(-mat.b1, mat.a1);
+        rotZ = std::atan2(mat.b1, mat.a1);
     } else {
         rotX = std::asin(sinX);
-        rotY = std::atan2(mat.c1, mat.c3);
+        rotY = std::atan2(-mat.c1, mat.c3);
         rotZ = std::atan2(-mat.a2, mat.b2);
     }
 
