@@ -1322,7 +1322,7 @@ aiNodeAnim *CreateNodeAnim(glTF2::Asset &, Node &node, AnimationSamplers &sample
     try {
         anim->mNodeName = GetNodeName(node);
 
-        static const float kMillisecondsFromSeconds = 1000.f;
+        static const double kMillisecondsFromSeconds = 1000.0;
 
         if (samplers.translation && samplers.translation->input && samplers.translation->output) {
             float *times = nullptr;
@@ -1422,7 +1422,7 @@ aiMeshMorphAnim *CreateMeshMorphAnim(glTF2::Asset &, Node &node, AnimationSample
     try {
         anim->mName = GetNodeName(node);
 
-        static const float kMillisecondsFromSeconds = 1000.f;
+        static const double kMillisecondsFromSeconds = 1000.0;
 
         if (samplers.weight && samplers.weight->input && samplers.weight->output) {
             float *times = nullptr;
