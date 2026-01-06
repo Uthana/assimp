@@ -1142,6 +1142,15 @@ enum aiComponent
 #define AI_CONFIG_EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY \
         "EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY"
 
+/** @brief Specifies whether to omit End Site nodes when exporting BVH files.
+ *
+ * BVH files typically include End Site nodes to mark the end of bone chains.
+ * When this flag is enabled, End Site nodes are not written to the output.
+ *
+ * Property type: Bool. Default value: true.
+ */
+#define AI_CONFIG_EXPORT_BVH_NO_END_SITES "EXPORT_BVH_NO_END_SITES"
+
 /**
  * @brief Specifies the blob name, assimp uses for exporting.
  * 
