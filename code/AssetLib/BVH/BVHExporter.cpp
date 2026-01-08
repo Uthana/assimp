@@ -236,17 +236,18 @@ void BVHExporter::WriteFrame(unsigned int frameIndex) {
         const aiNode *node = mNodeOrder[i];
         bool isRoot = (i == 0);
 
-        // Default values
-        aiVector3D pos(0.0f, 0.0f, 0.0f);
-        aiQuaternion rot;
+        // Extract the default pose from the node's transformation matrix
+        aiVector3D defaultPos, defaultScale;
+        aiQuaternion defaultRot;
+        node->mTransformation.Decompose(defaultScale, defaultRot, defaultPos);
+
+        // Start with the default pose values
+        aiVector3D pos = defaultPos;
+        aiQuaternion rot = defaultRot;
         float rotX = 0.0f, rotY = 0.0f, rotZ = 0.0f;
 
-        // Get the offset from the node's transformation as default position
-        if (isRoot) {
-            pos.x = node->mTransformation.a4;
-            pos.y = node->mTransformation.b4;
-            pos.z = node->mTransformation.c4;
-        }
+        // Convert default rotation to Euler angles
+        QuaternionToEulerZXY(defaultRot, rotX, rotY, rotZ);
 
         // Try to get animation data for this node
         const aiNodeAnim *nodeAnim = GetNodeAnim(std::string(node->mName.C_Str()));
