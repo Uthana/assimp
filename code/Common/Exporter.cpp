@@ -182,21 +182,21 @@ static void setupExporterArray(std::vector<Exporter::ExportFormatEntry> &exporte
 
 #ifndef ASSIMP_BUILD_NO_3DS_EXPORTER
 	exporters.emplace_back("3ds", "Autodesk 3DS (legacy)", "3ds", &ExportScene3DS,
-			aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices);
+			aiProcess_Triangulate | aiProcess_SortByPType);
 #endif
 
 #if !defined(ASSIMP_BUILD_NO_GLTF_EXPORTER) && !defined(ASSIMP_BUILD_NO_GLTF2_EXPORTER)
 	exporters.emplace_back("gltf2", "GL Transmission Format v. 2", "gltf", &ExportSceneGLTF2,
-			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_SortByPType);
+			aiProcess_Triangulate | aiProcess_SortByPType);
 	exporters.emplace_back("glb2", "GL Transmission Format v. 2 (binary)", "glb", &ExportSceneGLB2,
-			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_SortByPType);
+			aiProcess_Triangulate | aiProcess_SortByPType);
 #endif
 
 #if !defined(ASSIMP_BUILD_NO_GLTF_EXPORTER) && !defined(ASSIMP_BUILD_NO_GLTF1_EXPORTER)
 	exporters.emplace_back("gltf", "GL Transmission Format", "gltf", &ExportSceneGLTF,
-			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_SortByPType);
+			aiProcess_Triangulate | aiProcess_SortByPType);
 	exporters.emplace_back("glb", "GL Transmission Format (binary)", "glb", &ExportSceneGLB,
-			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_SortByPType);
+			aiProcess_Triangulate | aiProcess_SortByPType);
 #endif
 
 #ifndef ASSIMP_BUILD_NO_ASSBIN_EXPORTER
