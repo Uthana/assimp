@@ -1101,6 +1101,7 @@ void FBXExporter::WriteObjects () {
     std::vector<uint32_t> uniq_v_before_mi;
 
     const auto bTransparencyFactorReferencedToOpacity = mProperties->GetPropertyBool(AI_CONFIG_EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY, false);
+    const bool bUseOffsetMatrix = mProperties->GetPropertyBool(AI_CONFIG_EXPORT_FBX_USE_OFFSET_MATRIX, false);
 
     // geometry (aiMesh)
     mesh_uids.clear();
@@ -2116,22 +2117,30 @@ void FBXExporter::WriteObjects () {
                 sdnode.AddChild("Weights", subdef_weights);
             }
 
-            // transform is the transform of the mesh, but in bone space.
-            // if the skeleton is in the bind pose,
-            // we can take the inverse of the world-space bone transform
-            // and multiply by the world-space transform of the mesh.
-            aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
-            aiMatrix4x4 inverse_bone_xform = bone_xform;
-            inverse_bone_xform.Inverse();
-            aiMatrix4x4 tr = inverse_bone_xform * mesh_xform;
-
-            sdnode.AddChild("Transform", tr);
-
-
-            sdnode.AddChild("TransformLink", bone_xform);
-            // note: this means we ALWAYS rely on the mesh node transform
-            // being unchanged from the time the skeleton was bound.
-            // there's not really any way around this at the moment.
+            if (bUseOffsetMatrix && b) {
+                // mOffsetMatrix = inverse(bone_world_bind) * mesh_world_bind,
+                // which is exactly the FBX "Transform" (mesh in bone space at bind time).
+                sdnode.AddChild("Transform", b->mOffsetMatrix);
+                // TransformLink = bone_world_bind = mesh_world * inverse(mOffsetMatrix)
+                aiMatrix4x4 inv_bind_pose = b->mOffsetMatrix;
+                aiMatrix4x4 bind_pose = inv_bind_pose.Inverse();
+                aiMatrix4x4 transform_link = mesh_xform * bind_pose;
+                sdnode.AddChild("TransformLink", transform_link);
+            } else {
+                // transform is the transform of the mesh, but in bone space.
+                // if the skeleton is in the bind pose,
+                // we can take the inverse of the world-space bone transform
+                // and multiply by the world-space transform of the mesh.
+                aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
+                aiMatrix4x4 inverse_bone_xform = bone_xform;
+                inverse_bone_xform.Inverse();
+                aiMatrix4x4 tr = inverse_bone_xform * mesh_xform;
+                sdnode.AddChild("Transform", tr);
+                sdnode.AddChild("TransformLink", bone_xform);
+                // note: this means we ALWAYS rely on the mesh node transform
+                // being unchanged from the time the skeleton was bound.
+                // there's not really any way around this at the moment.
+            }
 
             // done
             sdnode.Dump(outstream, binary, indent);

@@ -1142,6 +1142,18 @@ enum aiComponent
 #define AI_CONFIG_EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY \
         "EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY"
 
+/** @brief Specifies whether to use aiBone::mOffsetMatrix for bind-pose transforms.
+ *
+ * When enabled, the FBX exporter computes Cluster Transform and TransformLink
+ * from each bone's mOffsetMatrix (the inverse bind-pose matrix) instead of
+ * deriving them from the scene-graph node transforms. This is useful when
+ * the skeleton is not in bind pose at export time.
+ *
+ * Property type: Bool. Default value: false.
+ */
+#define AI_CONFIG_EXPORT_FBX_USE_OFFSET_MATRIX \
+        "EXPORT_FBX_USE_OFFSET_MATRIX"
+
 /** @brief Specifies whether to omit End Site nodes when exporting BVH files.
  *
  * BVH files typically include End Site nodes to mark the end of bone chains.
