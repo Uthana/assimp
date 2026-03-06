@@ -2059,20 +2059,6 @@ void FBXExporter::WriteObjects () {
 
         // now make a subdeformer for each bone in the skeleton
         const auto & skeleton= skeleton_by_mesh[mi];
-
-        // AJT:
-        std::stringstream err;
-        err << "AJT: skeleton for mi = [" << mi << "]";
-        ASSIMP_LOG_WARN(err.str());
-        err.str("");
-        err.clear();
-        for (auto& node : skeleton) {
-          err << "AJT:    node.name = " << node->mName.C_Str();
-          ASSIMP_LOG_WARN(err.str());
-          err.str("");
-          err.clear();
-        }
-
         for (const aiNode* bone_node : skeleton) {
             // if there's a bone for this node, find it
             const aiBone* b = nullptr;
@@ -2087,10 +2073,6 @@ void FBXExporter::WriteObjects () {
             if (!b) {
                 no_offset_matrix.insert(bone_node);
             }
-
-            std::stringstream err;
-            err << "AJT: WTF bUseOffsetMatrix = " << bUseOffsetMatrix << ", b = " << reinterpret_cast<const void*>(b);
-            ASSIMP_LOG_WARN(err.str());
 
             // start the subdeformer node
             const int64_t subdeformer_uid = generate_uid();
@@ -2142,7 +2124,7 @@ void FBXExporter::WriteObjects () {
                 ASSIMP_LOG_WARN(err.str());
 
                 // mOffsetMatrix is the inv bind pose in world space.
-                sdnode.AddChild("Transform", b->mOffsetMatrix * mesh_xform);
+                sdnode.AddChild("Transform", b->mOffsetMatrix);
                 aiMatrix4x4 inv_bind_pose = b->mOffsetMatrix;
                 aiMatrix4x4 bind_pose = inv_bind_pose.Inverse();
                 sdnode.AddChild("TransformLink", bind_pose);
