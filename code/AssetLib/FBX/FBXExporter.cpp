@@ -2118,6 +2118,11 @@ void FBXExporter::WriteObjects () {
             }
 
             if (bUseOffsetMatrix && b) {
+                // AJT:
+                std::stringstream err;
+                err << "AJT: bUseOffsetMatrix!";
+                ASSIMP_LOG_WARN(err.str());
+
                 // mOffsetMatrix = inverse(bone_world_bind) * mesh_world_bind,
                 // which is exactly the FBX "Transform" (mesh in bone space at bind time).
                 sdnode.AddChild("Transform", b->mOffsetMatrix);
@@ -2127,6 +2132,10 @@ void FBXExporter::WriteObjects () {
                 aiMatrix4x4 transform_link = mesh_xform * bind_pose;
                 sdnode.AddChild("TransformLink", transform_link);
             } else {
+                std::stringstream err;
+                err << "AJT: bUseOffsetMatrix = false or !b";
+                ASSIMP_LOG_WARN(err.str());
+
                 // transform is the transform of the mesh, but in bone space.
                 // if the skeleton is in the bind pose,
                 // we can take the inverse of the world-space bone transform
