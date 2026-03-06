@@ -2085,11 +2085,12 @@ void FBXExporter::WriteObjects () {
                 }
             }
             if (!b) {
-                std::stringstream err;
-                err << "AJT: could not find b for bone_node " << bone_node->mName.C_Str();
-                ASSIMP_LOG_WARN(err.str());
                 no_offset_matrix.insert(bone_node);
             }
+
+            std::stringstream err;
+            err << "AJT: WTF bUseOffsetMatrix = " << bUseOffsetMatrix << ", b = " << reinterpret_cast<const void*>(b);
+            ASSIMP_LOG_WARN(err.str());
 
             // start the subdeformer node
             const int64_t subdeformer_uid = generate_uid();
