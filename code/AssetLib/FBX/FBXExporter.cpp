@@ -2059,6 +2059,20 @@ void FBXExporter::WriteObjects () {
 
         // now make a subdeformer for each bone in the skeleton
         const auto & skeleton= skeleton_by_mesh[mi];
+
+        // AJT:
+        std::stringstream err;
+        err << "AJT: skeleton for mi = [" << mi << "]";
+        ASSIMP_LOG_WARN(err.str());
+        err.str("");
+        err.clear();
+        for (auto& node : skeleton) {
+          err << "AJT:    node.name = " << node->mName.C_Str();
+          ASSIMP_LOG_WARN(err.str());
+          err.str("");
+          err.clear();
+        }
+
         for (const aiNode* bone_node : skeleton) {
             // if there's a bone for this node, find it
             const aiBone* b = nullptr;
@@ -2071,6 +2085,9 @@ void FBXExporter::WriteObjects () {
                 }
             }
             if (!b) {
+                std::stringstream err;
+                err << "AJT: could not find b for bone_node " << bone_node->mName.C_Str();
+                ASSIMP_LOG_WARN(err.str());
                 no_offset_matrix.insert(bone_node);
             }
 
