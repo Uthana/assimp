@@ -2141,14 +2141,11 @@ void FBXExporter::WriteObjects () {
                 err << "AJT: bUseOffsetMatrix!";
                 ASSIMP_LOG_WARN(err.str());
 
-                // mOffsetMatrix = inverse(bone_world_bind) * mesh_world_bind,
-                // which is exactly the FBX "Transform" (mesh in bone space at bind time).
-                sdnode.AddChild("Transform", b->mOffsetMatrix);
-                // TransformLink = bone_world_bind = mesh_world * inverse(mOffsetMatrix)
+                // mOffsetMatrix is the inv bind pose in world space.
+                sdnode.AddChild("Transform", b->mOffsetMatrix * mesh_xform);
                 aiMatrix4x4 inv_bind_pose = b->mOffsetMatrix;
                 aiMatrix4x4 bind_pose = inv_bind_pose.Inverse();
-                aiMatrix4x4 transform_link = mesh_xform * bind_pose;
-                sdnode.AddChild("TransformLink", transform_link);
+                sdnode.AddChild("TransformLink", bind_pose);
             } else {
                 std::stringstream err;
                 err << "AJT: bUseOffsetMatrix = false or !b";
