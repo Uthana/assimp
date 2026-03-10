@@ -2289,6 +2289,10 @@ void FBXExporter::WriteObjects () {
             aiMatrix4x4 node_xform = get_world_transform(bonenode, mScene);
             auto iter = node_to_bone.find(bonenode);
             if (iter != node_to_bone.end()) {
+              std::stringstream err;
+              err << "AJT: Got here using mOffsetMatrix for bone (" << bonenode->mName.C_Str() << ")\n";
+              ASSIMP_LOG_WARN(err.str());
+
               node_xform = iter->second->mOffsetMatrix;
               node_xform.Inverse();
             }
