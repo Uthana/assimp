@@ -2244,11 +2244,13 @@ void FBXExporter::WriteObjects () {
         // and also if parents of used bones don't have a subdeformer.
         // order shouldn't matter.
         std::set<aiNode*> skeleton;
+        std::unordered_map<aiNode*, const aiBone*> node_to_bone;
         for (size_t bi = 0; bi < mesh->mNumBones; ++bi) {
             // bone node should have already been indexed
             const aiBone* b = mesh->mBones[bi];
             const std::string bone_name(b->mName.C_Str());
             aiNode* parent = node_by_bone[bone_name];
+            node_to_bone[parent] = b;
             // insert all nodes down to the root or mesh node
             while (
                 parent
@@ -2285,6 +2287,11 @@ void FBXExporter::WriteObjects () {
             pose = FBX::Node("PoseNode");
             pose.AddChild("Node", node_uid);
             aiMatrix4x4 node_xform = get_world_transform(bonenode, mScene);
+            auto iter = node_to_bone.find(bonenode);
+            if (iter != node_to_bone.end()) {
+              node_xform = iter->second->mOffsetMatrix;
+              node_xform.Inverse();
+            }
             pose.AddChild("Matrix", node_xform);
             bpnode.AddChild(pose);
         }
