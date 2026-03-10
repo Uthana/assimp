@@ -134,6 +134,7 @@ namespace FBX {
 
 } // end of namespace Assimp
 
+
 FBXExporter::FBXExporter ( const aiScene* pScene, const ExportProperties* pProperties )
 : binary(false)
 , mScene(pScene)
@@ -2209,6 +2210,7 @@ void FBXExporter::WriteObjects () {
 
     }
 
+  if (bUseOffsetMatrix) {
     // BindPose
     //
     // This is a legacy system, which should be unnecessary.
@@ -2221,7 +2223,7 @@ void FBXExporter::WriteObjects () {
     // but it's pretty much a hack anyway,
     // as assimp doesn't store bindpose information for full skeletons.
     //
-    /*for (size_t mi = 0; mi < mScene->mNumMeshes; ++mi) {
+    for (size_t mi = 0; mi < mScene->mNumMeshes; ++mi) {
         aiMesh* mesh = mScene->mMeshes[mi];
         if (! mesh->HasBones()) { continue; }
         int64_t bindpose_uid = generate_uid();
@@ -2263,7 +2265,7 @@ void FBXExporter::WriteObjects () {
 
         // the first pose node is always the mesh itself
         FBX::Node pose("PoseNode");
-        pose.AddChild("Node", mesh_uids[mi]);
+        pose.AddChild("Node", mesh_uids[mesh_node]);
         aiMatrix4x4 mesh_node_xform = get_world_transform(mesh_node, mScene);
         pose.AddChild("Matrix", mesh_node_xform);
         bpnode.AddChild(pose);
@@ -2289,7 +2291,8 @@ void FBXExporter::WriteObjects () {
 
         // now write it
         bpnode.Dump(outstream, binary, indent);
-    }*/
+    }
+  }
 
     // lights
     indent = 1;
