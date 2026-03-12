@@ -2119,42 +2119,12 @@ void FBXExporter::WriteObjects () {
             }
 
             if (bUseOffsetMatrix && b) {
-                // AJT:
-                std::stringstream err;
-                err << "AJT: bUseOffsetMatrix!\n";
-
-                aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
-                aiVector3D t, s;
-                aiQuaternion r;
-                bone_xform.Decompose(s, r, t);
-                err << "AJT: bone_xform " << bone_node->mName.C_Str() << " =\n";
-                err << "AJT:     t = (" << t.x << ", " << t.y << ", " << t.z << ")\n";
-                err << "AJT:     r = (" << r.x << ", " << r.y << ", " << r.z << ", " << r.w << ")\n";
-                err << "AJT:     s = (" << s.x << ", " << s.y << ", " << s.z << ")\n";
-                mesh_xform.Decompose(s, r, t);
-                err << "AJT: mesh_xform =\n";
-                err << "AJT:     t = (" << t.x << ", " << t.y << ", " << t.z << ")\n";
-                err << "AJT:     r = (" << r.x << ", " << r.y << ", " << r.z << ", " << r.w << ")\n";
-                err << "AJT:     s = (" << s.x << ", " << s.y << ", " << s.z << ")\n";
-                aiMatrix4x4 x = b->mOffsetMatrix;
-                x.Inverse();
-                x.Decompose(s, r, t);
-                err << "AJT: bind_pose =\n";
-                err << "AJT:     t = (" << t.x << ", " << t.y << ", " << t.z << ")\n";
-                err << "AJT:     r = (" << r.x << ", " << r.y << ", " << r.z << ", " << r.w << ")\n";
-                err << "AJT:     s = (" << s.x << ", " << s.y << ", " << s.z << ")\n";
-                ASSIMP_LOG_WARN(err.str());
-
                 // mOffsetMatrix is the inv bind pose in world space.
-                sdnode.AddChild("Transform", b->mOffsetMatrix);
+                sdnode.AddChild("Transform", b->mOffsetMatrix * mesh_xform);
                 aiMatrix4x4 inv_bind_pose = b->mOffsetMatrix;
                 aiMatrix4x4 bind_pose = inv_bind_pose.Inverse();
                 sdnode.AddChild("TransformLink", bind_pose);
             } else {
-                std::stringstream err;
-                err << "AJT: bUseOffsetMatrix = false or !b";
-                ASSIMP_LOG_WARN(err.str());
-
                 // transform is the transform of the mesh, but in bone space.
                 // if the skeleton is in the bind pose,
                 // we can take the inverse of the world-space bone transform
@@ -2162,8 +2132,7 @@ void FBXExporter::WriteObjects () {
                 aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
                 aiMatrix4x4 inverse_bone_xform = bone_xform;
                 inverse_bone_xform.Inverse();
-                aiMatrix4x4 tr = inverse_bone_xform * mesh_xform;
-                sdnode.AddChild("Transform", tr);
+                sdnode.AddChild("Transform", inverse_bone_xform * mesh_xform);
                 sdnode.AddChild("TransformLink", bone_xform);
                 // note: this means we ALWAYS rely on the mesh node transform
                 // being unchanged from the time the skeleton was bound.
@@ -2210,6 +2179,7 @@ void FBXExporter::WriteObjects () {
 
     }
 
+    /*
   if (bUseOffsetMatrix) {
     // BindPose
     //
@@ -2289,10 +2259,6 @@ void FBXExporter::WriteObjects () {
             aiMatrix4x4 node_xform = get_world_transform(bonenode, mScene);
             auto iter = node_to_bone.find(bonenode);
             if (iter != node_to_bone.end()) {
-              std::stringstream err;
-              err << "AJT: Got here using mOffsetMatrix for bone (" << bonenode->mName.C_Str() << ")\n";
-              ASSIMP_LOG_WARN(err.str());
-
               node_xform = iter->second->mOffsetMatrix;
               node_xform.Inverse();
             }
@@ -2304,6 +2270,7 @@ void FBXExporter::WriteObjects () {
         bpnode.Dump(outstream, binary, indent);
     }
   }
+    */
 
     // lights
     indent = 1;
