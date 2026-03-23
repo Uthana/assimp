@@ -134,6 +134,7 @@ namespace FBX {
 
 } // end of namespace Assimp
 
+
 FBXExporter::FBXExporter ( const aiScene* pScene, const ExportProperties* pProperties )
 : binary(false)
 , mScene(pScene)
@@ -1101,6 +1102,7 @@ void FBXExporter::WriteObjects () {
     std::vector<uint32_t> uniq_v_before_mi;
 
     const auto bTransparencyFactorReferencedToOpacity = mProperties->GetPropertyBool(AI_CONFIG_EXPORT_FBX_TRANSPARENCY_FACTOR_REFER_TO_OPACITY, false);
+    const bool bUseOffsetMatrix = mProperties->GetPropertyBool(AI_CONFIG_EXPORT_FBX_USE_OFFSET_MATRIX, false);
 
     // geometry (aiMesh)
     mesh_uids.clear();
@@ -2116,22 +2118,26 @@ void FBXExporter::WriteObjects () {
                 sdnode.AddChild("Weights", subdef_weights);
             }
 
-            // transform is the transform of the mesh, but in bone space.
-            // if the skeleton is in the bind pose,
-            // we can take the inverse of the world-space bone transform
-            // and multiply by the world-space transform of the mesh.
-            aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
-            aiMatrix4x4 inverse_bone_xform = bone_xform;
-            inverse_bone_xform.Inverse();
-            aiMatrix4x4 tr = inverse_bone_xform * mesh_xform;
-
-            sdnode.AddChild("Transform", tr);
-
-
-            sdnode.AddChild("TransformLink", bone_xform);
-            // note: this means we ALWAYS rely on the mesh node transform
-            // being unchanged from the time the skeleton was bound.
-            // there's not really any way around this at the moment.
+            if (bUseOffsetMatrix && b) {
+                // mOffsetMatrix is the inv bind pose in world space.
+                sdnode.AddChild("Transform", b->mOffsetMatrix * mesh_xform);
+                aiMatrix4x4 inv_bind_pose = b->mOffsetMatrix;
+                aiMatrix4x4 bind_pose = inv_bind_pose.Inverse();
+                sdnode.AddChild("TransformLink", bind_pose);
+            } else {
+                // transform is the transform of the mesh, but in bone space.
+                // if the skeleton is in the bind pose,
+                // we can take the inverse of the world-space bone transform
+                // and multiply by the world-space transform of the mesh.
+                aiMatrix4x4 bone_xform = get_world_transform(bone_node, mScene);
+                aiMatrix4x4 inverse_bone_xform = bone_xform;
+                inverse_bone_xform.Inverse();
+                sdnode.AddChild("Transform", inverse_bone_xform * mesh_xform);
+                sdnode.AddChild("TransformLink", bone_xform);
+                // note: this means we ALWAYS rely on the mesh node transform
+                // being unchanged from the time the skeleton was bound.
+                // there's not really any way around this at the moment.
+            }
 
             // done
             sdnode.Dump(outstream, binary, indent);
@@ -2173,6 +2179,8 @@ void FBXExporter::WriteObjects () {
 
     }
 
+    /*
+  if (bUseOffsetMatrix) {
     // BindPose
     //
     // This is a legacy system, which should be unnecessary.
@@ -2185,7 +2193,7 @@ void FBXExporter::WriteObjects () {
     // but it's pretty much a hack anyway,
     // as assimp doesn't store bindpose information for full skeletons.
     //
-    /*for (size_t mi = 0; mi < mScene->mNumMeshes; ++mi) {
+    for (size_t mi = 0; mi < mScene->mNumMeshes; ++mi) {
         aiMesh* mesh = mScene->mMeshes[mi];
         if (! mesh->HasBones()) { continue; }
         int64_t bindpose_uid = generate_uid();
@@ -2206,11 +2214,13 @@ void FBXExporter::WriteObjects () {
         // and also if parents of used bones don't have a subdeformer.
         // order shouldn't matter.
         std::set<aiNode*> skeleton;
+        std::unordered_map<aiNode*, const aiBone*> node_to_bone;
         for (size_t bi = 0; bi < mesh->mNumBones; ++bi) {
             // bone node should have already been indexed
             const aiBone* b = mesh->mBones[bi];
             const std::string bone_name(b->mName.C_Str());
             aiNode* parent = node_by_bone[bone_name];
+            node_to_bone[parent] = b;
             // insert all nodes down to the root or mesh node
             while (
                 parent
@@ -2227,7 +2237,7 @@ void FBXExporter::WriteObjects () {
 
         // the first pose node is always the mesh itself
         FBX::Node pose("PoseNode");
-        pose.AddChild("Node", mesh_uids[mi]);
+        pose.AddChild("Node", mesh_uids[mesh_node]);
         aiMatrix4x4 mesh_node_xform = get_world_transform(mesh_node, mScene);
         pose.AddChild("Matrix", mesh_node_xform);
         bpnode.AddChild(pose);
@@ -2247,13 +2257,20 @@ void FBXExporter::WriteObjects () {
             pose = FBX::Node("PoseNode");
             pose.AddChild("Node", node_uid);
             aiMatrix4x4 node_xform = get_world_transform(bonenode, mScene);
+            auto iter = node_to_bone.find(bonenode);
+            if (iter != node_to_bone.end()) {
+              node_xform = iter->second->mOffsetMatrix;
+              node_xform.Inverse();
+            }
             pose.AddChild("Matrix", node_xform);
             bpnode.AddChild(pose);
         }
 
         // now write it
         bpnode.Dump(outstream, binary, indent);
-    }*/
+    }
+  }
+    */
 
     // lights
     indent = 1;
